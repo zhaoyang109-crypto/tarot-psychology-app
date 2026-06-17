@@ -523,164 +523,211 @@ function renderReading() {
     container.innerHTML = html;
 }
 
-function generateCompositeReading(spreadConfig, question) {
-    let html = '<div class="card-interpretation">';
-    
-    // 获取个人情况上下文
-    const profileContext = getProfileContext();
+// ========== 解读引擎 v2 - 动态差异化系统 ==========
 
-    // 如果有个人情况，显示个性化解读提示
-    if (profileContext) {
-        html += `
-            <div class="interp-section" style="border-left-color: var(--accent-teal); background: rgba(26, 188, 156, 0.03);">
-                <h4>👤 你的专属解读</h4>
-                <p>基于你的个人情况：<em>${profileContext}</em></p>
-                <p style="margin-top:0.5rem;">以下解读将结合你的具体情况进行分析。</p>
-            </div>
-        `;
+let _readingSessionId = null;
+
+const READING_VARIANTS = {
+    openings: [
+        (cards, q) => `当你抽出这些牌的瞬间，宇宙正在用一种独特的方式与你对话${q ? `——关于「${q}」` : ''}。牌面的排列并非偶然，而是你潜意识深处某种渴望的外在投射。`,
+        (cards, q) => `${q ? `关于「${q}」，` : ''}这组牌面呈现出一种微妙的能量共振。每一张牌都像是一个独立的讯息片段，而当它们组合在一起时，一个更完整的故事开始浮现。`,
+        (cards, q) => `深呼吸——让这些牌面的意象慢慢渗透进你的意识。${q ? `你带着关于「${q}」的疑问来到这里，` : ''}而塔罗牌将以它独有的方式为你展开答案的画卷。`,
+        (cards, q) => `牌已落定，命运的齿轮悄然转动。${q ? `关于「${q}」的问题，` : ''}这组牌面将揭示一些你可能已经隐约感觉到、但尚未完全看清的东西。`,
+        (cards, q) => `在这个特别的时刻，你与这组塔罗牌产生了连接。${q ? `让它们来回应你对「${q}」的探寻。` : '让它们为你照亮前行的道路。'}`,
+    ],
+    energySummaries: [
+        (kw, hm, sf) => `纵观整个牌阵，核心能量汇聚于<strong>${kw.join(' · ')}</strong>。${hm ? '大阿尔卡纳的介入说明这件事触及了你生命的底层架构，不是表面的波动。' : ''}${sf ? `从元素层面看，${sf}是当前最活跃的能量场。` : ''}`,
+        (kw, hm, sf) => `这组牌面编织出的主题图谱以<strong>${kw.join(' · ')}</strong>为经纬。${hm ? '大阿卡纳牌的出现意味着这不是一个普通的周期——命运之手正在参与其中。' : ''}${sf ? `特别值得关注的是${sf}层面的强烈信号。` : ''}`,
+        (kw, hm, sf) => `<strong>${kw.join(' · ')}</strong>——这是本次牌阵想要传达的核心频率。${hm ? '大阿尔卡纳的存在提醒我们：眼前的议题比你想象的更有深度。' : ''}${sf ? `而在具体的生活领域中，${sf}是最需要你投入注意力的方向。` : ''}`,
+    ],
+    closings: [
+        (pf) => `最后想对你说：塔罗牌是一面镜子，它映照出的始终是你自己。${pf ? `结合你的个人情况来看，` : ''}真正的答案不在牌上，而在你心里。相信自己的判断力，同时保持开放的心态面对可能性。`,
+        (pf) => `记住，牌面展示的是一种可能性的图景，而非不可改变的预言。${pf ? `考虑到你目前的处境，` : ''}你有能力去塑造接下来发生的事情。塔罗给你的最大礼物，是让你看见自己拥有的选择权。`,
+        (pf) => `愿这次的解读能为你带来一些新的视角。${pf ? `在你当前的人生阶段，` : ''}最重要的不是预知未来，而是理解当下。当你真正理解了此刻，未来自然会清晰地展开。`,
+        (pf) => `牌局已尽，但生活的篇章还在继续书写。${pf ? `结合你的情况，` : ''}建议你在接下来的几天里留意那些看似巧合的事件——它们往往是宇宙对你最直接的低语。`,
+        (pf) => `感谢你愿意通过塔罗牌来探索自己。${pf ? `针对你的个人情况，` : ''}这次解读的核心讯息其实可以归结为一句话：你已经拥有了你所需要的一切，只是有时候需要一点帮助才能看见它。`,
+    ]
+};
+
+const CARD_INTERACTIONS = {
+    majorCombos: {
+        'The Fool+The Magician': '愚者遇见魔术师——纯真的冒险精神即将转化为具体的行动力。这是一个从"想做"到"在做"的关键转折点。',
+        'The Lovers+The Chariot': '恋人牌的选择加上战车牌的意志力——一旦做出了决定，就用全部的力量去执行它。犹豫不决的时候最消耗能量。',
+        'The Tower+The Star': '高塔之后必有星星。毁灭性的事件往往是为重建腾出空间的前奏。如果你刚刚经历了一些崩塌，请相信——最好的还在后面。',
+        'Death+The Sun': '死神与太阳同现，这是最积极的转化信号之一。旧的结束正是新生的开始，而且这个新生会带来纯粹的喜悦。',
+        'The Hermit+The World': '隐士的独处最终通向世界的圆满。你现在经历的孤独和内省，是在为一个更大的完整做准备。',
+        'The Devil+The Temperance': '魔鬼代表执念与束缚，节制代表平衡与调和。这组牌在说：你被某些东西困住了，但解药就在适度与平衡之中。',
+        'The Moon+The Sun': '月亮与太阳同现——从迷茫走向清晰的过程正在发生。黑暗中孕育的光明即将破晓。',
+        'Justice+The Wheel of Fortune': '正义与命运之轮的组合暗示着因果循环——过去的每一个选择都在塑造着当下的局面，而现在的决定又将影响未来的轨迹。',
+    },
+    elementDynamics: {
+        'wands+cups': '火（权杖）与水（圣杯）的相遇总是充满张力——行动的热情与情感的深度在这里交汇，需要找到两者共存的方式。',
+        'swords+pentacles': '宝剑的思维分析遇上钱币的现实考量，这是一个非常务实的组合。理想很丰满，但你需要脚踏实地去实现它。',
+        'wands+swords': '双重的风元素——权杖的行动力加上宝剑的清晰思维。思路清晰时就是最佳的行动时机，但也要避免过于理性而忽略了感受。',
+        'cups+pentacles': '圣杯的情感需求与钱币的物质现实之间需要找到平衡点。既要照顾内心，也不能忽视实际生活。',
+        'wands+pentacles': '权杖的创造力与钱币的稳定性结合——这是将想法落地的绝佳配置！有愿景也有执行力。',
+    },
+    numberPatterns: {
+        lowNumbers: '低数字牌（1-5）为主的牌阵暗示事情还处于起步或发展阶段，不要急于求成，给过程一些时间。',
+        midNumbers: '中段数字牌（6-9）的出现表明事物正在走向成熟，你已经度过了最初的困难期，现在进入了一个相对稳定的阶段。',
+        highNumbers: '高位数字牌（10+）密集出现预示着一个周期的收尾或重大转折。旧的阶段即将结束，新的篇章正在酝酿。',
+        ascending: '牌面数字呈现上升趋势——这是一个积极的发展信号，能量正在向上流动，事情会越来越好。',
+        descending: '数字逐渐降低——可能表示需要回归基础，或者某个事物正在经历收缩和简化的过程。',
     }
+};
 
-    // 综合概述
-    const keywords = AppState.drawnCards.flatMap(c => c.keywords).slice(0, 8);
-    html += `
-        <div class="interp-section">
-            <h4>🔮 综合能量</h4>
-            <p>本次${spreadConfig.name}展现的核心主题：<strong>${keywords.join(' · ')}</strong>。这些牌面的组合暗示着生命正在经历一次重要的能量转换。每一张牌都是你内心世界的一面镜子，共同编织出当前生命阶段的完整图景。</p>
-        </div>
-    `;
+function pickRandom(arr) { return arr[Math.floor(Math.random() * arr.length)]; }
+function seededRandom(seed) { const x = Math.sin(seed * 9999) * 10000; return x - Math.floor(x); }
+function createReadingSession() { _readingSessionId = Date.now() + Math.random(); }
 
-    // 逐牌解读（融合个人情况）
-    AppState.drawnCards.forEach((card, index) => {
-        const personalizedMeaning = personalizeCardReading(card, index, profileContext);
-        
-        html += `
-            <div class="interp-section">
-                <h4>${card.symbol} ${card.name} — ${spreadConfig.positions[index]}</h4>
-                <p><strong>正位含义：</strong>${card.uprightMeaning}</p>
-                ${personalizedMeaning ? `<p style="margin-top:0.6rem; padding:0.6rem; background:rgba(155,89,182,0.05); border-radius:8px; font-size:0.9rem;"><strong>💫 结合你的情况：</strong>${personalizedMeaning}</p>` : ''}
-            </div>
-            
-            <div class="interp-section interp-psychological">
-                <h4>🧠 心理学视角</h4>
-                <p>${card.psychologicalInsight}</p>
-            </div>
-            
-            <div class="interp-section interp-advice">
-                <h4>💡 建议</h4>
-                <p>${card.advice}</p>
-            </div>
-        `;
+function analyzeNumberPattern(cards) {
+    const nums = cards.filter(c => c.number !== undefined && c.number !== 0).map(c => c.number);
+    if (!nums.length) return null;
+    const avg = nums.reduce((a,b)=>a+b,0)/nums.length;
+    const asc = nums.every((n,i)=>i===0||n>=nums[i-1]);
+    const desc = nums.every((n,i)=>i===0||n<=nums[i-1]);
+    if (avg<=5) return {type:'low',desc:CARD_INTERACTIONS.numberPatterns.lowNumbers};
+    if (avg>=8) return {type:'high',desc:CARD_INTERACTIONS.numberPatterns.highNumbers};
+    if (asc&&nums.length>1) return {type:'asc',desc:CARD_INTERACTIONS.numberPatterns.ascending};
+    if (desc&&nums.length>1) return {type:'desc',desc:CARD_INTERACTIONS.numberPatterns.descending};
+    return {type:'mid',desc:CARD_INTERACTIONS.numberPatterns.midNumbers};
+}
+function analyzeElementDistribution(cards) {
+    const suits = [...new Set(cards.filter(c=>c.suit).map(c=>c.suit))];
+    if (suits.length===2) { const k=suits.sort().join('+'); return CARD_INTERACTIONS.elementDynamics[k]||null; }
+    return null;
+}
+function checkMajorCombos(cards) {
+    const names = cards.filter(c=>c.arcana==='major').map(c=>c.nameEn);
+    for (const [k,v] of Object.entries(CARD_INTERACTIONS.majorCombos)) {
+        if (k.split('+').every(n=>names.includes(n))) return v;
+    }
+    return null;
+}
+
+function generateDynamicCardInterpretation(card, idx, spreadCfg, allCards, pfCtx) {
+    const posName = spreadCfg.positions[idx];
+    const d = UserProfile.data || {};
+    const concerns = d.concerns || [];
+    const mood = d.mood;
+    const sr = seededRandom((_readingSessionId||1)+idx+card.id);
+    let interp = '';
+
+    const posCtx = {
+        '过去': () => pickRandom([`在过去的位置上，${card.name}揭示了这段经历的根源。`,`回望过去，${card.name}是你生命故事中的一个重要章节。`,`${card.name}出现在过去位，说明这段能量已经塑造了今天的你。`]),
+        '现在': () => pickRandom([`当下的能量由${card.name}主导——这正是你此刻所处的状态。`,`${card.name}落在现在的位置，像一盏灯照亮了你当前的处境。`,`此时此刻，${card.name}的能量最为强烈地影响着你的生活。`]),
+        '未来': () => pickRandom([`看向未来，${card.name}暗示着可能的发展方向。`,`${card.name}在未来位出现，为接下来的旅程投下了一束光。`,`如果沿着当前的轨迹发展，${card.name}预示着前方等待着你的是什么。`]),
+        '建议': () => pickRandom([`${card.name}作为建议牌，它的讯息值得认真对待。`,`当${card.name}以建议的姿态出现时，它在告诉你……`,`来自${card.name}的建议是：`]),
+        '核心': () => pickRandom([`${card.name}位于核心位置——它是整个牌阵的灵魂所在。`,`整组牌围绕${card.name}展开，这说明它是你目前最需要关注的焦点。`,`作为核心牌，${card.name}承载着最重要的讯息。`]),
+        '阻碍': () => pickRandom([`${card.name}在这里指出了一个需要面对的挑战。`,`阻碍位置的${card.name}揭示了什么在阻挡你前进。`,`不要害怕——${card.name}作为障碍牌出现，恰恰说明你有能力跨越它。`]),
+        '希望': () => pickRandom([`${card.name}带来了希望的光芒。即使在不确定的时刻，这张牌也在告诉你：一切都会好的。`,`希望位的${card.name}是一个非常积极的信号——宇宙没有放弃你。`,`让${card.name}的希望之光照亮你前行的路吧。`]),
+        '结果': () => pickRandom([`如果一切按照牌面的指引发展，最终的结果可能与${card.name}相关。`,`${card.name}作为结果牌，展示了事情可能的最终面貌。`,`结局尚未写定，但${card.name}给出了一个可能的轮廓。`]),
+    };
+    const fn = posCtx[posName];
+    if (fn) interp += fn() + ' ';
+
+    const ci = generateConcernBasedInsight(card, concerns, mood);
+    interp += ci ? ci + ' ' : generateVariantMeaning(card, sr) + ' ';
+    interp += generatePsychologicalAngle(card, idx, allCards, sr);
+    return interp;
+}
+
+function generateConcernBasedInsight(card, concerns, mood) {
+    const ins = [];
+    const careerMap = {'The Magician':'在职场上，魔术师暗示你正处于一个可以将想法变为现实的黄金时期——大胆提出你的方案吧。','The Chariot':'战车牌在事业维度上是一个强有力的信号：通过坚持和专注，你的职业目标完全可以实现。','The Emperor':'皇帝牌提示建立更好的工作秩序和边界感——清晰的规则会让你在职场中更有掌控力。','Eight of Pentacles':'星币八非常明确地在说：事业上的成功来自于日复一日的精进和打磨。','Three of Wands':'权杖三预示着你的事业视野正在扩展——也许是新的合作机会或是项目进入了扩张期。'};
+    if (concerns.includes('career')) { if (careerMap[card.nameEn]) ins.push(careerMap[card.nameEn]); else if (card.suit==='wands') ins.push(`从事业发展角度看，这张${card.name}（权杖牌）暗示着行动和主动性是关键。`); else if (card.suit==='pentacles') ins.push(`${card.name}在物质层面提醒你：事业的根基在于扎实的积累和实际的付出。`); }
+    const loveMap = {'The Lovers':'恋人牌在感情语境下不言而喻——一段重要的关系或情感抉择正在你的人生舞台上上演。','Two of Cups':'圣杯二是一张典型的感情和谐之牌。如果已有伴侣关系正在升温；如果单身可能遇到有缘人。','The Empress':'皇后牌在感情中代表着丰盛的爱意和温柔的滋养——现在是打开心扉的好时机。','Ten of Cups':'圣杯十描绘的是情感满足和家庭幸福的终极画面。','Knight of Cups':'圣杯骑士常常带来浪漫的消息——一个充满魅力的人或动人的告白可能正在路上。'};
+    if (concerns.includes('love')) { if (loveMap[card.nameEn]) ins.push(loveMap[card.nameEn]); else if (card.suit==='cups') ins.push(`在感情维度上，${card.name}（圣杯牌）邀请你更多地信任自己的感受和直觉。`); }
+    const wealthMap = {'Ace of Pentacles':'钱币首牌是财务方面的新起点信号——可能是新的收入来源或投资机会。','Nine of Pentacles':'钱币九描绘的是财务独立和自我充实的美好状态。','King of Pentacles':'钱币国王代表财富的稳定增长和精明的理财能力。'};
+    if (concerns.includes('wealth')) { if (wealthMap[card.nameEn]) ins.push(wealthMap[card.nameEn]); else if (card.suit==='pentacles') ins.push(`在财务层面，${card.name}提示你关注物质的实际情况。`); }
+    const decisionMap = {'Two of Swords':'宝剑二精准地描述了决策困境——需要在两个选项之间做出艰难的选择。关键是不要拖延太久。','The Hanged Man':'倒吊人在决策语境下：有时候最好的决定是暂停。换个角度看问题，答案可能会变得清晰。'};
+    if (concerns.includes('decision')) { if (decisionMap[card.nameEn]) ins.push(decisionMap[card.nameEn]); else if (card.suit==='swords') ins.push(`面对抉择时，${card.name}建议用冷静的分析头脑来处理。`); }
+    if (mood==='anxious' && card.number && card.number<=5) ins.push(`结合你近期焦虑的情绪，这张编号较小的${card.name}似乎在温柔地说：不需要一下子解决所有问题，从小事做起就好。`);
+    if (mood==='sad' && ['The Star','The Sun','Ace of Cups'].includes(card.nameEn)) ins.push(`${card.name}在你情绪低落时出现，就像黑暗中的一束光——请相信，阴霾终会散去。`);
+    if (mood==='confused' && ['The Hermit','The High Priestess','The Moon'].includes(card.nameEn)) ins.push(`迷茫时期遇到${card.name}是一个深刻的指引：答案不在外面，而在你的内在智慧之中。`);
+    return ins.length > 0 ? pickRandom(ins) : null;
+}
+
+function generateVariantMeaning(card, rand) {
+    const v = [card.uprightMeaning, `从另一个角度来看，${card.name}也可以这样理解：${card.advice}`, `${card.keywords.slice(0,3).join('、')}——这三个关键词概括了${card.name}在此处的核心信息。`, `牌面上的${card.name}在轻声诉说着：${card.uprightMeaning.substring(0,30)}...`];
+    return v[Math.floor(rand*v.length)] || card.uprightMeaning;
+}
+
+function generatePsychologicalAngle(card, idx, allCards, rand) {
+    const a = [`从心理学角度观察，${card.psychologicalInsight.substring(0,50)}...`,`荣格学派可能会这样解读${card.name}：这张牌触及了集体潜意识中关于"${pickRandom(card.keywords)}"的原型意象。`,`在认知行为疗法（CBT）的框架下，${card.name}可以被理解为一种认知模式的隐喻——它反映了你当前如何看待自己和世界。`,`从人本主义心理学的视角看，${card.name}指向了自我实现过程中的一个关键环节。`,`正念心理学会将${card.name}视为一种觉察的练习——它邀请你去观察而非评判当下的体验。`];
+    return a[Math.floor(rand*a.length)];
+}
+
+function generateCardConnection(prev, curr) {
+    const t = [`与上一张${prev.name}相比，${curr.name}引入了一种新的能量维度。`,`紧随${prev.name}之后的${curr.name}，形成了一个有趣的叙事弧线。`,`从${prev.name}过渡到${curr.name}，暗示着能量正在发生转变。`,`${prev.name}铺陈了背景，而${curr.name}则将故事推向了新的方向。`];
+    const ck = `${prev.nameEn}+${curr.nameEn}`;
+    const sc = CARD_INTERACTIONS.majorCombos[ck];
+    if (sc) return sc;
+    if (prev.suit && curr.suit && prev.suit!==curr.suit) {
+        const ek = [prev.suit, curr.suit].sort().join('+');
+        const en = CARD_INTERACTIONS.elementDynamics[ek];
+        if (en) return pickRandom(t)+' '+en;
+    }
+    return pickRandom(t);
+}
+
+function generateCompositeReading(spreadConfig, question) {
+    createReadingSession();
+    let html = '<div class="card-interpretation">';
+    const pfCtx = getProfileContext();
+    const cards = AppState.drawnCards;
+
+    const ofn = pickRandom(READING_VARIANTS.openings);
+    const ot = ofn(cards, question);
+    html += `<div class="interp-section" style="border-left-color:var(--accent-gold);background:rgba(232,197,71,0.03)"><h4>🔮 牌阵开启</h4><p>${ot}</p>${pfCtx?`<p style="margin-top:0.6rem;font-size:0.89rem;color:var(--accent-teal)">👤 本次解读参考了你的个人情况：${pfCtx}</p>`:''}</div>`;
+
+    const kw = [...new Set(cards.flatMap(c=>c.keywords))].slice(0,6);
+    const hasMajor = cards.some(c=>c.arcana==='major');
+    const suits = [...new Set(cards.filter(c=>c.suit).map(c=>c.suit))];
+    const sn = {wands:'行动力与创造力',cups:'情感与直觉',swords:'思想与沟通',pentacles:'物质与实际'};
+    const sf = suits.length>0 && suits.length<=2 ? suits.map(s=>sn[s]).join('和') : '';
+    const efn = pickRandom(READING_VARIANTS.energySummaries);
+    const et = efn(kw, hasMajor, sf);
+    const mc = checkMajorCombos(cards);
+    const en = analyzeElementDistribution(cards);
+    const np = analyzeNumberPattern(cards);
+    html += `<div class="interp-section"><h4>⚡ 能量全貌</h4><p>${et}</p>${mc?`<p style="margin-top:0.7rem;padding:0.6rem 0.8rem;background:rgba(168,85,247,0.06);border-radius:8px;font-size:0.9rem"><strong>🔗 牌面共鸣：</strong>${mc}</p>`:''}${en?`<p style="margin-top:0.7rem;padding:0.6rem 0.8rem;background:rgba(96,165,250,0.06);border-radius:8px;font-size:0.9rem"><strong>🌊 元素互动：</strong>${en}</p>`:''}${np?`<p style="margin-top:0.7rem;padding:0.6rem 0.8rem;background:rgba(45,212,191,0.06);border-radius:8px;font-size:0.9rem"><strong>📊 数字韵律：</strong>${np.desc}</p>`:''}</div>`;
+
+    cards.forEach((card, idx) => {
+        const di = generateDynamicCardInterpretation(card, idx, spreadConfig, cards, pfCtx);
+        let ch = '';
+        if (idx > 0) { const cn = generateCardConnection(cards[idx-1], card, idx); ch = `<div style="margin:0.8rem 0;padding:0.5rem 0.8rem;border-left:2px solid rgba(168,85,247,0.3);font-size:0.88rem;color:var(--text-secondary);background:rgba(168,85,247,0.03);border-radius:0 8px 8px 0">🔗 ${cn}</div>`; }
+        html += `<div class="interp-section"><h4>${card.symbol} ${card.name} — ${spreadConfig.positions[idx]}</h4>${ch}<p><strong>📖 牌面解读：</strong></p><p style="margin-top:0.4rem">${di}</p></div><div class="interp-section interp-psychological"><h4>🧠 内在洞察</h4><p>${card.psychologicalInsight}</p></div><div class="interp-section interp-advice"><h4>💡 此刻可行之事</h4><p>${generateDynamicAdvice(card,idx)}</p></div>`;
     });
 
-    // 整体建议（融入个人情况）
-    html += `
-        <div class="interp-section" style="border-left-color: var(--accent-gold);">
-            <h4>✨ 整体指引</h4>
-            <p>${generateOverallGuidance()}</p>
-        </div>
-    `;
-
-    // 温馨提示
-    html += `
-        <div style="margin-top: 1.5rem; padding: 1rem; background: rgba(231, 76, 60, 0.05); border-radius: 10px; font-size: 0.85rem; color: var(--text-muted); text-align: center;">
-            ⚠️ 以上解读仅供参考和娱乐，塔罗牌是自我探索的工具而非预言。如遇心理困扰，请寻求专业心理咨询师的帮助。
-        </div>
-    `;
-
+    const og = generateDynamicOverallGuidance(cards, spreadConfig, pfCtx);
+    html += `<div class="interp-section" style="border-left-color:var(--accent-gold);background:rgba(232,197,71,0.02)"><h4>✨ 牌阵结语</h4><p>${og}</p></div>`;
+    html += `<div style="margin-top:1.5rem;padding:1rem;background:rgba(244,63,94,0.04);border:1px solid rgba(244,63,94,0.1);border-radius:12px;font-size:0.84rem;color:var(--text-muted);text-align:center;line-height:1.6">🌙 以上解读仅供自我探索与娱乐参考<br>塔罗牌是一面镜子，帮助你更好地认识自己，而非预测未来的工具<br>如遇持续的心理困扰，建议寻求专业心理咨询师的帮助 💜</div>`;
     html += '</div>';
     return html;
 }
 
-/**
- * 根据用户个人情况为每张牌生成个性化解读
- */
-function personalizeCardReading(card, positionIndex, profileContext) {
-    if (!profileContext) return '';
-    
-    const d = UserProfile.data;
-    let personalized = '';
-    const concerns = d.concerns || [];
-    const mood = d.mood;
-    const lifeStage = d.lifeStage;
-    const occupation = d.occupation;
-
-    // 根据关注领域定制解读
-    if (concerns.includes('career') && card.suit === 'wands') {
-        personalized += '从事业角度看，这张权杖牌暗示着你在工作中需要更加主动和有创造力。';
-    }
-    if (concerns.includes('love') && card.suit === 'cups') {
-        personalized += '在感情层面，这张圣杯牌揭示了情感世界中的重要讯息——倾听内心的声音，真实的感受值得被看见。';
-    }
-    if (concerns.includes('wealth') && card.suit === 'pentacles') {
-        personalized += '在物质与财务方面，这张钱币牌提醒你关注实际层面的积累和规划。';
-    }
-    if (concerns.includes('decision') && card.suit === 'swords') {
-        personalized +='面对重要抉择时，这张宝剑牌建议你用清晰的思维来分析利弊，而非被情绪左右。';
-    }
-
-    // 根据情绪状态定制
-    if (mood === 'anxious' && card.number >= 8 && card.arcana === 'minor') {
-        personalized += (personalized ? ' ' : '') + '结合你近期焦虑的状态，这张牌的出现可能是在提醒：你已经比想象中更有能力应对挑战。';
-    }
-    if (mood === 'confused' && (card.nameEn === 'The Hermit' || card.nameEn === 'The High Priestess')) {
-        personalized += (personalized ? ' ' : '') + '迷茫时期出现这张牌是一个积极的信号——答案就在你的内在智慧之中，给自己一些静默的时间。';
-    }
-    if (mood === 'sad' && (card.nameEn === 'The Star' || card.nameEn === 'The Sun')) {
-        personalized += (personalized ? ' ' : '') + '在你感到低落的时候抽到这张牌，宇宙在温柔地告诉你：最黑暗的时刻往往预示着光明的到来。';
-    }
-
-    // 根据人生阶段定制
-    if (lifeStage === 'student' && card.nameEn === 'The Magician') {
-        personalized += (personalized ? ' ' : '') + '作为学生，魔术师牌鼓励你将所学知识转化为实际的创造力和行动力。';
-    }
-    if (lifeStage === 'early_career' && card.nameEn === 'The Chariot') {
-        personalized += (personalized ? ' ' : '') + '职场新人阶段遇到战车牌，预示着通过坚持和努力，你将在职业道路上取得突破。';
-    }
-    if ((lifeStage === 'midlife_transition' || lifeStage === 'established') && card.nameEn === 'Death') {
-        personalized += (personalized ? ' ' : '') + '在你当前的人生阶段，死神牌更多象征着积极的意义——是时候放下不再服务于你的旧模式，为新的人生篇章腾出空间了。';
-    }
-
-    return personalized;
+function generateDynamicAdvice(card, idx) {
+    const av = [card.advice, `具体来说，你可以尝试这样做：${card.advice.toLowerCase()}`, `将${card.name}的智慧转化为行动：${card.keywords[0]}是你今天可以聚焦的关键词。`, `一个小小的实践建议：花几分钟思考一下"${pickRandom(card.keywords)}"这个词对你的意义。`];
+    return av[((_readingSessionId||1)+idx+card.id)%av.length] || card.advice;
 }
 
-function generateOverallGuidance() {
-    const hasMajor = AppState.drawnCards.some(c => c.arcana === 'major');
-    const suits = new Set(AppState.drawnCards.map(c => c.suit).filter(Boolean));
-    const profileContext = getProfileContext();
-    
-    let guidance = '从整体来看，';
-
-    if (hasMajor) {
-        guidance += '大阿尔卡纳的出现意味着这次解读触及了你生命中较为核心和深层的议题。宇宙在邀请你进行一次重要的内在对话。';
-    } else {
-        guidance += '小阿尔卡纳的组合指向日常生活中具体而实际的层面。关注当下的细节，答案往往藏在日常之中。';
+function generateDynamicOverallGuidance(cards, spreadCfg, pfCtx) {
+    const cfn = pickRandom(READING_VARIANTS.closings);
+    let ss = '';
+    switch(AppState.currentSpread) {
+        case 'daily': ss='作为每日占卜，这些讯息主要适用于接下来的24-48小时。保持觉察，你会注意到牌面能量在日常生活中的投射。'; break;
+        case 'celtic': ss='凯尔特十字牌阵提供了非常全面的信息图谱。建议你不要试图一次性消化所有内容，而是分几次回来阅读。'; break;
+        case 'relationship': ss='关系牌阵的解读核心在于"连接"——不仅是你与他人之间的连接，更是你与自己内在各个部分的连接。'; break;
+        case 'decision': ss='抉择牌阵的目的不是替你做决定，而是帮你厘清每个选项背后的动力和潜在结果。'; break;
     }
-
-    if (suits.size <= 2 && suits.size > 0) {
-        const suitNames = { wands: '行动力/创造力', cups: '情感/直觉', swords: '思想/沟通', pentacles: '物质/实际' };
-        const focusAreas = Array.from(suits).map(s => suitNames[s]).join('和');
-        guidance += `牌面集中在${focusAreas}领域，这是目前最需要你投入关注的能量方向。`;
-    }
-
-    // 融合个人情况的额外指引
-    const d = UserProfile.data;
-    if (d.mood === 'anxious') {
-        guidance += ' 结合你近期焦虑的情绪状态，牌面在温柔地提醒：焦虑往往源于对未知的恐惧，而你比想象中更有力量去面对它。';
-    }
-    if (d.mood === 'confused') {
-        guidance += ' 在迷茫的时刻，这些牌面就像一盏灯——不需要立刻看清整条路，只需要照亮脚下的下一步。';
-    }
-    if (d.concerns && d.concerns.includes('decision')) {
-        guidance += ' 面对重要抉择，塔罗牌不是替你做决定，而是帮助你看见自己内心深处真正想要的是什么。';
-    }
-    if (profileContext && d.lifeStage) {
-        guidance += ` 在你当前的人生阶段，这些讯息具有特别的意义——信任这个过程，每一步都在塑造更好的自己。`;
-    }
-
-    guidance += '记住，塔罗牌不会决定你的命运——它只是帮助你更清晰地看见自己。真正的力量始终在你手中。';
-
-    return guidance;
+    let ei = '';
+    const mc = cards.filter(c=>c.arcana==='major').length;
+    if (mc > cards.length/2) ei=' 这次解读中大阿尔卡纳占据主导地位，说明你正在处理人生层面的重要课题，值得深入探索。';
+    else if (mc===0) ei=' 全部是小阿尔卡纳牌，这意味着答案藏在日常生活的细节之中。关注身边的小事，它们往往蕴含重要线索。';
+    return cfn(pfCtx)+' '+ss+ei;
 }
+
 
 // ========== 卡牌详情弹窗 ==========
 function showCardDetail(card) {
