@@ -1,0 +1,560 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>塔罗心灵驿站 - 探索内心深处的智慧</title>
+    <link rel="stylesheet" href="styles.css">
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Serif+SC:wght@400;600;700&family=Noto+Sans+SC:wght@300;400;500;600&display=swap" rel="stylesheet">
+</head>
+<body>
+    <!-- 星空背景 -->
+    <div class="starfield"></div>
+    
+    <!-- 导航栏 -->
+    <nav class="navbar">
+        <div class="nav-brand">
+            <span class="logo-icon">✧</span>
+            <span class="logo-text">塔罗心灵驿站</span>
+        </div>
+        <div class="nav-links">
+            <a href="#home" class="nav-link active">首页</a>
+            <a href="#draw" class="nav-link">抽卡</a>
+            <a href="#reading" class="nav-link">解读</a>
+            <a href="#consult" class="nav-link">咨询</a>
+        </div>
+        <button class="mobile-menu-btn">☰</button>
+    </nav>
+
+    <!-- 首页 -->
+    <section id="home" class="section active">
+        <div class="hero-container">
+            <div class="hero-content">
+                <h1 class="hero-title">
+                    <span class="title-line">探索内心深处</span>
+                    <span class="title-highlight">的智慧之光</span>
+                </h1>
+                <p class="hero-subtitle">
+                    塔罗牌是通往潜意识的桥梁，让古老的智慧指引你找到内心的答案
+                </p>
+                <div class="hero-features">
+                    <div class="feature-item">
+                        <div class="feature-icon">🎴</div>
+                        <h3>78张塔罗牌</h3>
+                        <p>完整的韦特塔罗牌组</p>
+                    </div>
+                    <div class="feature-item">
+                        <div class="feature-icon">🌙</div>
+                        <h3>专业解读</h3>
+                        <p>结合心理学深度分析</p>
+                    </div>
+                    <div class="feature-item">
+                        <div class="feature-icon">💫</div>
+                        <h3>心灵咨询</h3>
+                        <p>一对一心理陪伴服务</p>
+                    </div>
+                </div>
+                <button class="cta-button" onclick="navigateTo('draw')">
+                    开始你的探索之旅
+                    <span class="btn-glow"></span>
+                </button>
+            </div>
+            <div class="hero-cards">
+                <div class="floating-card card-1">
+                    <div class="card-inner">
+                        <div class="card-front">☀️</div>
+                    </div>
+                </div>
+                <div class="floating-card card-2">
+                    <div class="card-inner">
+                        <div class="card-front">🌙</div>
+                    </div>
+                </div>
+                <div class="floating-card card-3">
+                    <div class="card-inner">
+                        <div class="card-front">⭐</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 服务介绍 -->
+        <div class="services-section">
+            <h2 class="section-title">我们的服务</h2>
+            <div class="services-grid">
+                <div class="service-card">
+                    <div class="service-image daily-reading">
+                        <span>🎯</span>
+                    </div>
+                    <h3>每日一牌</h3>
+                    <p>每天抽取一张指引牌，获得当天的能量启示和行动建议</p>
+                    <button class="service-btn" onclick="navigateTo('draw', 'daily')">立即体验</button>
+                </div>
+                <div class="service-card">
+                    <div class="service-image celtic-cross">
+                        <span>✨</span>
+                    </div>
+                    <h3>凯尔特十字</h3>
+                    <p>经典十牌阵，全面分析现状、挑战、建议与未来走向</p>
+                    <button class="service-btn" onclick="navigateTo('draw', 'celtic')">立即体验</button>
+                </div>
+                <div class="service-card">
+                    <div class="service-image relationship">
+                        <span>💕</span>
+                    </div>
+                    <h3>关系解读</h3>
+                    <p>深入探索人际关系中的能量流动与潜在发展</p>
+                    <button class="service-btn" onclick="navigateTo('draw', 'relationship')">立即体验</button>
+                </div>
+                <div class="service-card">
+                    <div class="service-image consultation">
+                        <span>🧘‍♀️</span>
+                    </div>
+                    <h3>心理咨询</h3>
+                    <p>专业心理咨询师结合塔罗进行深度心灵对话</p>
+                    <button class="service-btn" onclick="navigateTo('consult')">预约咨询</button>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- 抽卡页面 -->
+    <section id="draw" class="section">
+        <div class="draw-container">
+            <h2 class="page-title">选择你的牌阵</h2>
+            
+            <!-- 牌阵选择 -->
+            <div class="spread-selector" id="spreadSelector">
+                <div class="spread-option active" data-spread="daily">
+                    <div class="spread-preview">
+                        <div class="mini-card">?</div>
+                    </div>
+                    <h4>每日一牌</h4>
+                    <p>单牌指引</p>
+                </div>
+                <div class="spread-option" data-spread="three">
+                    <div class="spread-preview">
+                        <div class="mini-card">?</div>
+                        <div class="mini-card">?</div>
+                        <div class="mini-card">?</div>
+                    </div>
+                    <h4>三牌阵</h4>
+                    <p>过去·现在·未来</p>
+                </div>
+                <div class="spread-option" data-spread="celtic">
+                    <div class="spread-preview celtic-preview">
+                        <div class="mini-card center">?</div>
+                        <div class="mini-card top">?</div>
+                        <div class="mini-card bottom">?</div>
+                    </div>
+                    <h4>凯尔特十字</h4>
+                    <p>全面解读</p>
+                </div>
+                <div class="spread-option" data-spread="relationship">
+                    <div class="spread-preview">
+                        <div class="mini-card">?</div>
+                        <div class="mini-card">?</div>
+                    </div>
+                    <h4>关系牌阵</h4>
+                    <p>情感洞察</p>
+                </div>
+            </div>
+
+            <!-- 个人情况说明（可折叠） -->
+            <div class="profile-section" id="profileSection">
+                <div class="profile-header" onclick="toggleProfile()">
+                    <span class="profile-title">
+                        <span class="profile-icon">👤</span>
+                        个人情况说明
+                        <span class="profile-badge" id="profileBadge">选填</span>
+                    </span>
+                    <span class="profile-toggle" id="profileToggle">▼</span>
+                </div>
+                <div class="profile-body" id="profileBody">
+                    <p class="profile-tip">💡 填写你的个人情况，AI 将结合这些信息为你提供更精准、更个性化的解读</p>
+                    
+                    <div class="profile-grid">
+                        <!-- 基本信息 -->
+                        <div class="profile-group">
+                            <label class="group-label">📋 基本信息</label>
+                            <div class="field-row">
+                                <div class="field-item">
+                                    <label for="userNickname">称呼</label>
+                                    <input type="text" id="userNickname" placeholder="如何称呼你？">
+                                </div>
+                                <div class="field-item">
+                                    <label for="userBirthday">出生日期</label>
+                                    <input type="date" id="userBirthday">
+                                </div>
+                            </div>
+                            <div class="field-row">
+                                <div class="field-item">
+                                    <label for="userGender">性别</label>
+                                    <select id="userGender">
+                                        <option value="">不透露</option>
+                                        <option value="female">女</option>
+                                        <option value="male">男</option>
+                                        <option value="other">其他</option>
+                                    </select>
+                                </div>
+                                <div class="field-item">
+                                    <label for="userZodiac">星座（可选）</label>
+                                    <select id="userZodiac">
+                                        <option value="">选择星座</option>
+                                        <option value="aries">♈ 白羊座</option>
+                                        <option value="taurus">♉ 金牛座</option>
+                                        <option value="gemini">♊ 双子座</option>
+                                        <option value="cancer">♋ 巨蟹座</option>
+                                        <option value="leo">♌ 狮子座</option>
+                                        <option value="virgo">♍ 处女座</option>
+                                        <option value="libra">♎ 天秤座</option>
+                                        <option value="scorpio">♏ 天蝎座</option>
+                                        <option value="sagittarius">♐ 射手座</option>
+                                        <option value="capricorn">♑ 摩羯座</option>
+                                        <option value="aquarius">♒ 水瓶座</option>
+                                        <option value="pisces">♓ 双鱼座</option>
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- 当前状态 -->
+                        <div class="profile-group">
+                            <label class="group-label">🌟 当前状态</label>
+                            <div class="field-item full-width">
+                                <label for="userOccupation">职业/身份</label>
+                                <input type="text" id="userOccupation" placeholder="例如：学生、程序员、自由职业者、创业者...">
+                            </div>
+                            <div class="field-item full-width">
+                                <label for="userLifeStage">人生阶段</label>
+                                <select id="userLifeStage">
+                                    <option value="">选择你目前的人生阶段</option>
+                                    <option value="student">求学阶段（学生）</option>
+                                    <option value="early_career">职场新人（0-3年）</option>
+                                    <option value="career_growth">事业发展期（3-10年）</option>
+                                    <option value="midlife_transition">转型/探索期</option>
+                                    <option value="established">稳定成熟期</option>
+                                    <option value="retirement">退休/半退休</option>
+                                </select>
+                            </div>
+                            <div class="field-item full-width">
+                                <label for="userMood">近期情绪状态</label>
+                                <div class="mood-selector" id="moodSelector">
+                                    <button type="button" data-mood="anxious" class="mood-btn">😰 焦虑不安</button>
+                                    <button type="button" data-mood="confused" class="mood-btn">😕 迷茫困惑</button>
+                                    <button type="button" data-mood="sad" class="mood-btn">😢 低落难过</button>
+                                    <button type="button" data-mood="neutral" class="mood-btn">😐 平静一般</button>
+                                    <button type="button" data-mood="hopeful" class="mood-btn">🙂 充满期待</button>
+                                    <button type="button" data-mood="excited" class="mood-btn">🤩 兴奋激动</button>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- 关注领域 -->
+                        <div class="profile-group">
+                            <label class="group-label">🎯 关注领域（可多选）</label>
+                            <div class="tag-selector" id="concernSelector">
+                                <button type="button" data-concern="career" class="tag-btn">💼 事业工作</button>
+                                <button type="button" data-concern="love" class="tag-btn">💕 感情婚姻</button>
+                                <button type="button" data-concern="family" class="tag-btn">👨‍👩‍👧 家庭关系</button>
+                                <button type="button" data-concern="wealth" class="tag-btn">💰 财运金钱</button>
+                                <button type="button" data-concern="health" class="tag-btn">🏥 健康身心</button>
+                                <button type="button" data-concern="study" class="tag-btn">📚 学业考试</button>
+                                <button type="button" data-concern="self_growth" class="tag-btn">🌱 个人成长</button>
+                                <button type="button" data-concern="decision" class="tag-btn">⚖️ 重要抉择</button>
+                            </div>
+                        </div>
+
+                        <!-- 补充描述 -->
+                        <div class="profile-group">
+                            <label class="group-label">✍️ 补充说明</label>
+                            <div class="field-item full-width">
+                                <textarea id="userDescription" placeholder="简单描述你最近的情况或特别想了解的方向...&#10;&#10;例如：最近在考虑换工作，但有些犹豫；或者和伴侣之间有些矛盾需要理清..."></textarea>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="profile-actions">
+                        <button type="button" class="action-btn secondary profile-save-btn" onclick="saveProfile()">保存情况说明</button>
+                        <span class="profile-saved-hint" id="profileSavedHint" style="display:none;">✅ 已保存，解读时将参考这些信息</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 问题输入 -->
+            <div class="question-area">
+                <label for="questionInput">请默念你想询问的问题（可选）：</label>
+                <textarea id="questionInput" placeholder="在心中默念你的问题，或者在这里输入...&#10;&#10;例如：我最近的工作运势如何？&#10;      我应该如何处理这段关系？"></textarea>
+            </div>
+
+            <!-- 卡牌区域 -->
+            <div class="cards-area" id="cardsArea">
+                <div class="deck-container">
+                    <div class="tarot-deck" id="tarotDeck">
+                        <!-- 78张卡牌将由JS生成 -->
+                    </div>
+                    <p class="deck-hint">点击卡牌堆开始抽牌</p>
+                </div>
+                
+                <!-- 已抽出的牌 -->
+                <div class="drawn-cards" id="drawnCards"></div>
+            </div>
+
+            <!-- 操作按钮 -->
+            <div class="draw-actions">
+                <button class="action-btn secondary" id="resetBtn" onclick="resetDraw()">重新洗牌</button>
+                <button class="action-btn primary" id="drawBtn" onclick="drawCard()" disabled>抽牌</button>
+                <button class="action-btn success" id="interpretBtn" onclick="showInterpretation()" style="display:none;">查看解读</button>
+            </div>
+
+            <!-- 分隔线 -->
+            <div class="divider-section">
+                <div class="divider-line">
+                    <span class="divider-text">✨ 或者使用实体卡牌 ✨</span>
+                </div>
+            </div>
+
+            <!-- AI图片识别区域 -->
+            <div class="ai-recognition-area">
+                <h3 class="recognition-title">📸 AI 智能识牌</h3>
+                <p class="recognition-desc">拍摄或上传你的实体塔罗牌，AI 将自动识别并提供专业解读</p>
+                
+                <!-- 上传/拍照区域 -->
+                <div class="upload-zone" id="uploadZone" onclick="document.getElementById('cardImageInput').click()">
+                    <input type="file" id="cardImageInput" accept="image/*" capture="environment" style="display:none;" onchange="handleImageUpload(event)">
+                    <div class="upload-content" id="uploadContent">
+                        <div class="upload-icon">📷</div>
+                        <p class="upload-text">点击拍照或上传卡牌图片</p>
+                        <p class="upload-hint">支持 JPG、PNG 格式，建议光线充足、正面拍摄</p>
+                    </div>
+                    <div class="preview-content" id="previewContent" style="display:none;">
+                        <img id="previewImage" src="" alt="预览">
+                        <div class="preview-overlay">
+                            <span class="change-photo" onclick="event.stopPropagation(); document.getElementById('cardImageInput').click()">🔄 重新拍照</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 识别模式选择 -->
+                <div class="recognition-modes">
+                    <label class="mode-option">
+                        <input type="radio" name="recognizeMode" value="single" checked>
+                        <div class="mode-label">
+                            <span class="mode-icon">🎴</span>
+                            <span>单张识别</span>
+                        </div>
+                    </label>
+                    <label class="mode-option">
+                        <input type="radio" name="recognizeMode" value="spread">
+                        <div class="mode-label">
+                            <span class="mode-icon">🔮</span>
+                            <span>整组牌阵</span>
+                        </div>
+                    </label>
+                </div>
+
+                <!-- 识别按钮 -->
+                <button class="action-btn primary recognize-btn" id="recognizeBtn" onclick="startRecognition()" disabled>
+                    <span class="btn-icon">🔍</span>
+                    开始 AI 识别
+                </button>
+
+                <!-- 识别状态 -->
+                <div class="recognition-status" id="recognitionStatus" style="display:none;">
+                    <div class="status-loading" id="statusLoading">
+                        <div class="loading-spinner"></div>
+                        <p>AI 正在识别你的塔罗牌...</p>
+                        <p class="status-sub">这可能需要几秒钟，请耐心等待 ✨</p>
+                    </div>
+                    <div class="status-result" id="statusResult" style="display:none;">
+                        <!-- 识别结果将动态填充 -->
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- 解读页面 -->
+    <section id="reading" class="section">
+        <div class="reading-container">
+            <h2 class="page-title">牌面解读</h2>
+            
+            <div class="reading-content" id="readingContent">
+                <!-- 解读内容将动态生成 -->
+            </div>
+
+            <div class="reading-actions">
+                <button class="action-btn secondary" onclick="navigateTo('draw')">重新抽牌</button>
+                <button class="action-btn primary" onclick="navigateTo('consult')">预约深度咨询</button>
+            </div>
+        </div>
+    </section>
+
+    <!-- 咨询页面 -->
+    <section id="consult" class="section">
+        <div class="consult-container">
+            <h2 class="page-title">心灵咨询服务</h2>
+            
+            <div class="consult-intro">
+                <div class="intro-icon">🧘</div>
+                <h3>专业的心理陪伴</h3>
+                <p>我们认证的心理咨询师将结合塔罗牌的象征意义与现代心理学理论，为你提供温暖、专业的心灵支持。</p>
+            </div>
+
+            <!-- 咨询师列表 -->
+            <div class="counselors-list">
+                <div class="counselor-card">
+                    <div class="counselor-avatar">
+                        <span>👩‍⚕️</span>
+                        <span class="online-status online"></span>
+                    </div>
+                    <div class="counselor-info">
+                        <h4>明心老师</h4>
+                        <p class="counselor-title">国家二级心理咨询师 | 塔罗解读师</p>
+                        <div class="counselor-tags">
+                            <span>情感咨询</span>
+                            <span>职业规划</span>
+                            <span>个人成长</span>
+                        </div>
+                        <div class="counselor-stats">
+                            <span>⭐ 4.9</span>
+                            <span>💬 1280次咨询</span>
+                            <span>⏰ 5年经验</span>
+                        </div>
+                    </div>
+                    <button class="book-btn" onclick="bookConsultation('明心老师')">预约</button>
+                </div>
+
+                <div class="counselor-card">
+                    <div class="counselor-avatar">
+                        <span>👨‍⚕️</span>
+                        <span class="online-status online"></span>
+                    </div>
+                    <div class="counselor-info">
+                        <h4>悟远老师</h4>
+                        <p class="counselor-title">临床心理学硕士 | 塔罗研究者</p>
+                        <div class="counselor-tags">
+                            <span>深层心理</span>
+                            <span>梦境解析</span>
+                            <span>灵性成长</span>
+                        </div>
+                        <div class="counselor-stats">
+                            <span>⭐ 4.8</span>
+                            <span>💬 856次咨询</span>
+                            <span>⏰ 8年经验</span>
+                        </div>
+                    </div>
+                    <button class="book-btn" onclick="bookConsultation('悟远老师')">预约</button>
+                </div>
+
+                <div class="counselor-card">
+                    <div class="counselor-avatar">
+                        <span>👩‍🦰</span>
+                        <span class="online-status busy"></span>
+                    </div>
+                    <div class="counselor-info">
+                        <h4>静怡老师</h4>
+                        <p class="counselor-title">表达性艺术治疗师 | 命理咨询师</p>
+                        <div class="counselor-tags">
+                            <span>情绪疗愈</span>
+                            <span>家庭关系</span>
+                            <span>创伤修复</span>
+                        </div>
+                        <div class="counselor-stats">
+                            <span>⭐ 4.9</span>
+                            <span>💬 2100次咨询</span>
+                            <span>⏰ 10年经验</span>
+                        </div>
+                    </div>
+                    <button class="book-btn disabled" disabled>预约</button>
+                </div>
+            </div>
+
+            <!-- 预约表单 -->
+            <div class="booking-form-container" id="bookingFormContainer" style="display: none;">
+                <h3>预约咨询 - <span id="selectedCounselor"></span></h3>
+                <form class="booking-form" onsubmit="submitBooking(event)">
+                    <div class="form-group">
+                        <label>称呼</label>
+                        <input type="text" placeholder="我们该如何称呼您？" required>
+                    </div>
+                    <div class="form-group">
+                        <label>联系方式</label>
+                        <input type="tel" placeholder="手机号码或微信" required>
+                    </div>
+                    <div class="form-group">
+                        <label>咨询主题</label>
+                        <select required>
+                            <option value="">请选择咨询主题</option>
+                            <option value="emotion">情感困惑</option>
+                            <option value="career">职业发展</option>
+                            <option value="family">家庭关系</option>
+                            <option value="self">自我探索</option>
+                            <option value="other">其他</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>希望的时间</label>
+                        <input type="datetime-local" required>
+                    </div>
+                    <div class="form-group">
+                        <label>补充说明（可选）</label>
+                        <textarea placeholder="简单描述您想探讨的问题..."></textarea>
+                    </div>
+                    <div class="form-actions">
+                        <button type="button" class="action-btn secondary" onclick="closeBookingForm()">取消</button>
+                        <button type="submit" class="action-btn primary">确认预约</button>
+                    </div>
+                </form>
+            </div>
+
+            <!-- 常见问题 -->
+            <div class="faq-section">
+                <h3>常见问题</h3>
+                <div class="faq-list">
+                    <div class="faq-item">
+                        <h4>塔罗心理咨询与传统心理咨询有什么不同？</h4>
+                        <p>塔罗心理咨询将塔罗牌作为辅助工具，通过牌面的意象和象征来打开潜意识的大门，帮助来访者更直观地看到自己的内在状态。它不是算命，而是一种创造性的心理工作方式。</p>
+                    </div>
+                    <div class="faq-item">
+                        <h4>一次咨询需要多长时间？</h4>
+                        <p>标准咨询时长为60分钟。首次咨询可能会稍长一些，用于了解您的基本情况和建立信任关系。</p>
+                    </div>
+                    <div class="faq-item">
+                        <h4>咨询是完全保密的吗？</h4>
+                        <p>是的，我们严格遵守心理咨询伦理规范，所有咨询内容完全保密，除非涉及伤害自己或他人的风险。</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- 卡牌详情弹窗 -->
+    <div class="modal" id="cardModal">
+        <div class="modal-content">
+            <button class="modal-close" onclick="closeModal()">&times;</button>
+            <div class="modal-body" id="modalBody">
+                <!-- 动态填充 -->
+            </div>
+        </div>
+    </div>
+
+    <!-- 页脚 -->
+    <footer class="footer">
+        <div class="footer-content">
+            <div class="footer-brand">
+                <span class="logo-icon">✧</span>
+                <span>塔罗心灵驿站</span>
+            </div>
+            <p class="footer-disclaimer">
+                ⚠️ 免责声明：本应用提供的塔罗解读仅供娱乐和心理参考，不构成任何形式的医疗、法律或专业建议。
+                如遇严重心理困扰，请及时寻求专业医疗机构帮助。
+            </p>
+            <p class="footer-copy">&copy; 2026 塔罗心灵驿站 · 用心聆听每一个灵魂的声音</p>
+        </div>
+    </footer>
+
+    <script src="tarot-data.js"></script>
+    <script src="app.js"></script>
+</body>
+</html>
